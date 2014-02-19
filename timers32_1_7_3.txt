@@ -1,0 +1,36 @@
+┌ALL:        49.411
+│
+├INPROB:     33.075  66.94% OF ALL
+│
+├─INIT:       1.891   3.83% OF ALL   5.72% OF INPROB
+│
+├─SOURCE:    31.027  62.79% OF ALL  93.81% OF INPROB
+│
+├─GATHERV:    0.152   0.31% OF ALL   0.46% OF INPROB
+│
+├GMATR:       5.819  11.78% OF ALL
+│
+├POINT:       5.780  11.70% OF ALL
+│
+├─GMATRF:     0.160   0.32% OF ALL   2.77% OF POINT
+│
+├─GMATRL:     0.782   1.58% OF ALL  13.53% OF POINT
+│
+├─GMATRB:     0.000   0.00% OF ALL   0.00% OF POINT
+│
+├─GMATR_F:    0.270   0.55% OF ALL   4.66% OF POINT
+│
+├─GMATR_C:    1.010   2.04% OF ALL  17.47% OF POINT
+│
+├─GMATR0:     0.000   0.00% OF ALL   0.00% OF POINT
+│
+├─INTEG:      1.700   3.44% OF ALL  29.41% OF POINT
+│
+├─INTEGL:     1.063   2.15% OF ALL  18.39% OF POINT
+│
+├CP_BEGIN:    0.000   0.00% OF ALL
+│
+├CP_WORK:     0.000   0.00% OF ALL
+│
+└CP_WORK_Q:   0.000   0.00% OF ALL
+
