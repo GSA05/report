@@ -69,6 +69,38 @@ for $i ( values %time ) {
     }
 }
 
+my %functions = (
+    INIT => {
+        SIZE => 'NH',
+        },
+    SOURCE => {
+        SIZE => 'NH',
+        },
+    GMATR => {
+        SIZE => 'NG*NG',
+        },
+    GMATRF => {
+        SIZE => 'NG*NG',
+        },
+    GMATRL => {
+        SIZE => 'NG*NG',
+        },
+    GMATR_F => {
+        SIZE => 'NG*NG',
+        },
+    GMATR_C => {
+        SIZE => 'NG*NG',
+        },
+    INTEG => {
+        SIZE => 'NH',
+        },
+    INTEGL => {
+        SIZE => 'NH',
+        },
+    );
+    
+#print Dumper(%functions);
+
 my $workbook = Excel::Writer::XLSX->new('report.xlsx');
 my $format = $workbook->add_format();
 $format->set_bold();
@@ -87,7 +119,6 @@ my $mean0;
 my $var0;
 my $mean;
 my $var;
-my %positions;
 foreach $key ( keys %time ) {
     my $worksheet = $workbook->add_worksheet($key);
     for ( $row = 0; $row < @{$time{$key}}; $row++) {
@@ -100,15 +131,9 @@ foreach $key ( keys %time ) {
             $var = $student * $time{$key}->[$row]{$name}{'VAR'}**0.5;
             if ( !$row ) {
                 $worksheet->write($row,$k * 1 + $col++,$name,$format);
-                if ( $name eq 'INIT'
-                     or $name eq 'SOURCE'
-                     or $name eq 'GMATR'
-                     or $name eq 'GMATRF'
-                     or $name eq 'GMATRL'
-                     or $name eq 'GMATR_F'
-                     or $name eq 'GMATR_C'
-                     or $name eq 'INTEG'
-                     or $name eq 'INTEGL' ) { $positions{$name} = $col - 1 }
+                if ( defined $functions{$name} ) {
+                    $functions{$name}{'POSITION'} = $col - 1;
+                }
                 $worksheet->write($row,$k * 1 + $col++,'DATA1',$format);
                 $worksheet->write($row,$k * 1 + $col++,'DATA2',$format);
                 $worksheet->write($row,$k * 1 + $col++,'DATA3',$format);
@@ -138,3 +163,4 @@ foreach $key ( keys %time ) {
     
 }
 
+#print Dumper(%functions);
