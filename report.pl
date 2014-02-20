@@ -6,6 +6,8 @@ use Excel::Writer::XLSX;
 my $thread_num = 8;
 my $student = 1;#1.3862;
 my $NG = 5;
+#my $OMP = 16;
+my $MPI = 1;
 
 my $i = 0;
 my $j = 0;
@@ -171,9 +173,32 @@ foreach $key ( sort keys %time ) {
             $k++;
         }
     }
+    $col = 0;
     $row++;
-    $functions{'CONST'}{$key}{'PROC'} = 100 - sum($functions{'CONST'}{$key}{'PROC_MEAN'});
-    $functions{'CONST'}{$key}{'VAR'} = sum($functions{'CONST'}{$key}{'PROC_VAR'},2)**0.5;
+    my $c = $functions{'CONST'}{$key}{'PROC'} = 100 - sum($functions{'CONST'}{$key}{'PROC_MEAN'});
+    my $c_var = $functions{'CONST'}{$key}{'VAR'} = sum($functions{'CONST'}{$key}{'PROC_VAR'},2)**0.5;
+    $worksheet->write($row,$col++,'OMP',$format);
+    $worksheet->write($row,$col++,scalar @{$time{$key}},$format2);
+    $worksheet->write($row,$col++,'MPI',$format);
+    $worksheet->write($row,$col++,$MPI,$format2);
+    $worksheet->write($row,$col++,'NG',$format);
+    $worksheet->write($row,$col++,$NG,$format2);
+    $worksheet->write($row,$col++,'NH',$format);
+    $worksheet->write($row,$col++,$key,$format2);
+    $worksheet->write($row,$col++,'C',$format);
+    $worksheet->write($row,$col++,$c,$format2);
+    $worksheet->write($row,$col++,'C_VAR',$format);
+    $worksheet->write($row,$col++,$c_var,$format2);
+    $col = 0;
+    $row++;
+    $worksheet->write($row,$col++,'N',$format);
+    $worksheet->write($row,$col++,'A',$format);
+    $worksheet->write($row,$col++,'A_VAR',$format);
+    $worksheet->write($row,$col++,'AM',$format);
+    $worksheet->write($row,$col++,'AM_VAR',$format);
+    $worksheet->write($row,$col++,'C_VAR',$format);
+    $worksheet->write($row,$col++,'RES',$format);
+    $worksheet->write($row,$col++,'RES_VAR',$format);
 }
 
 print Dumper(%functions);
