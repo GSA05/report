@@ -1,6 +1,7 @@
 use strict;
 use Data::Dumper;
 use Excel::Writer::XLSX;
+use POSIX qw(ceil);
 #use re "debug";
 
 my $thread_num = 8;
@@ -140,10 +141,11 @@ foreach $key ( sort keys %time ) {
             if ( !$row ) {
                 $worksheet->write($row,$k * 1 + $col++,$name,$format);
                 if ( defined $functions{$name} ) {
-                    $functions{$name}{'POSITION'} = $col - 1;
-                    $functions{$name}{'SIZE'} =~ s/NG/$NG/g;
-                    $functions{$name}{'SIZE'} =~ s/NH/$key/g;
-                    $functions{$name}{'SIZE'} = eval $functions{$name}{'SIZE'};
+                    $functions{$name}{'POSITION'} = $k * 1 + $col - 1;
+                    my $size = $functions{$name}{'SIZE'};
+                    $size =~ s/NG/$NG/g;
+                    $size =~ s/NH/$key/g;
+                    $functions{$name}{'SIZES'}{$key} = eval $size;
                     $functions{'CONST'}{$key}{'PROC_MEAN'}[$f] = $time{$key}->[0]{$name}{'PROC_MEAN'};
                     $functions{'CONST'}{$key}{'PROC_VAR'}[$f++] = $student * $time{$key}->[0]{$name}{'PROC_VAR'}**0.5;
                 }
@@ -177,6 +179,8 @@ foreach $key ( sort keys %time ) {
     $row++;
     my $c = $functions{'CONST'}{$key}{'PROC'} = 100 - sum($functions{'CONST'}{$key}{'PROC_MEAN'});
     my $c_var = $functions{'CONST'}{$key}{'VAR'} = sum($functions{'CONST'}{$key}{'PROC_VAR'},2)**0.5;
+    my $p = sum($functions{'CONST'}{$key}{'PROC_MEAN'});
+    my $p_var = $c_var;
     $worksheet->write($row,$col++,'OMP',$format);
     $worksheet->write($row,$col++,scalar @{$time{$key}},$format2);
     $worksheet->write($row,$col++,'MPI',$format);
@@ -196,9 +200,29 @@ foreach $key ( sort keys %time ) {
     $worksheet->write($row,$col++,'A_VAR',$format);
     $worksheet->write($row,$col++,'AM',$format);
     $worksheet->write($row,$col++,'AM_VAR',$format);
-    $worksheet->write($row,$col++,'C_VAR',$format);
     $worksheet->write($row,$col++,'RES',$format);
     $worksheet->write($row,$col++,'RES_VAR',$format);
+    $i = 1;
+    $row++;
+    my $a;
+    while ( $i <= @{$time{$key}} ) {
+        my $a = ($c + $p)/($c + $p/$i);
+        foreach my $name ( keys %functions ) {
+            next if $name eq 'CONST';
+            my $pos = $functions{$name}{'POSITION'};
+            my $N = $functions{$name}{'SIZES'}{$key};
+            if ( $i == 1 ) {
+                $worksheet->write($row - 1,$pos,'NM',$format);
+            }
+            $worksheet->write($row,$pos,$N/ceil($N/$i),$format2);
+        }
+        $worksheet->write($row,0,$i);
+        $worksheet->write($row,1,$a,$format2);
+        #$worksheet->write($row,2,$a**2/100 * ($c_var**2 + $p_var**2/$i**2)**0.5,$format2);
+        $worksheet->write($row,2,($i - 1)/$i * $a**2/($c + $p)**2 * ($c_var**2 * $p**2 + $p_var**2 * $c**2)**0.5,$format2);
+        $row++;
+        $i++;
+    }
 }
 
 print Dumper(%functions);
