@@ -4,7 +4,7 @@ use Excel::Writer::XLSX;
 #use re "debug";
 
 my $thread_num = 8;
-my $student = 1.3862;
+my $student = 1;#1.3862;
 my $NG = 5;
 
 my $i = 0;
@@ -143,7 +143,7 @@ foreach $key ( sort keys %time ) {
                     $functions{$name}{'SIZE'} =~ s/NH/$key/g;
                     $functions{$name}{'SIZE'} = eval $functions{$name}{'SIZE'};
                     $functions{'CONST'}{$key}{'PROC_MEAN'}[$f] = $time{$key}->[0]{$name}{'PROC_MEAN'};
-                    $functions{'CONST'}{$key}{'PROC_VAR'}[$f++] = $time{$key}->[0]{$name}{'PROC_VAR'};
+                    $functions{'CONST'}{$key}{'PROC_VAR'}[$f++] = $student * $time{$key}->[0]{$name}{'PROC_VAR'}**0.5;
                 }
                 $worksheet->write($row,$k * 1 + $col++,'DATA1',$format);
                 $worksheet->write($row,$k * 1 + $col++,'DATA2',$format);
@@ -171,7 +171,9 @@ foreach $key ( sort keys %time ) {
             $k++;
         }
     }
+    $row++;
     $functions{'CONST'}{$key}{'PROC'} = 100 - sum($functions{'CONST'}{$key}{'PROC_MEAN'});
+    $functions{'CONST'}{$key}{'VAR'} = sum($functions{'CONST'}{$key}{'PROC_VAR'},2)**0.5;
 }
 
 print Dumper(%functions);
