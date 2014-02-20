@@ -147,6 +147,7 @@ foreach $key ( sort keys %time ) {
                     $size =~ s/NH/$key/g;
                     $functions{$name}{'SIZES'}{$key} = eval $size;
                     $functions{'CONST'}{$key}{'PROC_MEAN'}[$f] = $time{$key}->[0]{$name}{'PROC_MEAN'};
+                    $functions{'CONST'}{$key}{$name}{'PROC_MEAN'} = $time{$key}->[0]{$name}{'PROC_MEAN'};
                     $functions{'CONST'}{$key}{'PROC_VAR'}[$f++] = $student * $time{$key}->[0]{$name}{'PROC_VAR'}**0.5;
                 }
                 $worksheet->write($row,$k * 1 + $col++,'DATA1',$format);
@@ -205,21 +206,34 @@ foreach $key ( sort keys %time ) {
     $i = 1;
     $row++;
     my $a;
+    my $am = 0;
+    my $pm = 0;
     while ( $i <= @{$time{$key}} ) {
-        my $a = ($c + $p)/($c + $p/$i);
+        $a = ($c + $p)/($c + $p/$i);
+        $am = 0;
+        $mean0 = $time{$key}->[0]{'ALL'}{'MEAN'};
+        $var0 = $student * $time{$key}->[0]{'ALL'}{'VAR'}**0.5;
+        $mean = $time{$key}->[$i - 1]{'ALL'}{'MEAN'};
+        $var = $student * $time{$key}->[$i - 1]{'ALL'}{'VAR'}**0.5;
         foreach my $name ( keys %functions ) {
             next if $name eq 'CONST';
             my $pos = $functions{$name}{'POSITION'};
             my $N = $functions{$name}{'SIZES'}{$key};
+            $N = $N/ceil($N/$i);
+            $am += $functions{'CONST'}{$key}{$name}{'PROC_MEAN'}/$N;
             if ( $i == 1 ) {
+                $pm += $functions{'CONST'}{$key}{$name}{'PROC_MEAN'};
                 $worksheet->write($row - 1,$pos,'NM',$format);
             }
-            $worksheet->write($row,$pos,$N/ceil($N/$i),$format2);
+            $worksheet->write($row,$pos,$N,$format2);
         }
+        $am = ($c + $pm)/($c + $am);
         $worksheet->write($row,0,$i);
         $worksheet->write($row,1,$a,$format2);
         #$worksheet->write($row,2,$a**2/100 * ($c_var**2 + $p_var**2/$i**2)**0.5,$format2);
         $worksheet->write($row,2,($i - 1)/$i * $a**2/($c + $p)**2 * ($c_var**2 * $p**2 + $p_var**2 * $c**2)**0.5,$format2);
+        $worksheet->write($row,3,$am,$format2);
+        $worksheet->write($row,5,$mean0/$mean,$format2);
         $row++;
         $i++;
     }
