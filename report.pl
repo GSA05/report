@@ -2,10 +2,11 @@ use strict;
 use Data::Dumper;
 use Excel::Writer::XLSX;
 use POSIX qw(ceil);
+use Math::MatrixReal;
 #use re "debug";
 
 my $thread_num = 8;
-my $student = 1;#1.3862;
+my $student = 2.92;#1.3862;
 my $NG = 5;
 #my $OMP = 16;
 my $MPI = 1;
@@ -71,6 +72,26 @@ sub variance {
     my $v = sum($data,2);
     $v = ($v - $s**2/$n)/($n-1);
     return $v;
+}
+
+sub am_var {
+    my ( $means, $vars, $N , $t ) = @_;
+    my $vars_vec = Math::MatrixReal->new_from_rows([$vars]);
+    my $means_vec = Math::MatrixReal->new_from_rows([$means]);
+    my ( undef, $size ) = $means_vec->dim();
+    $vars_vec = $vars_vec->each( sub {
+        my ( $val, $i, $j ) = @_;
+        $val /= $N->[$j - 1];
+    } );
+    my $C = new Math::MatrixReal($size, $size);
+    for ( my $i = 1; $i <= $size; $i++) { $C = $C->assign_row($i, $means_vec) }
+    #print Dumper($N);
+    $C = $C->each( sub {
+        my ( $val, $i, $j ) = @_;
+        $val = $val * ($N->[$i - 1] - $N->[$j - 1]) / $N->[$j - 1];
+    } );
+    print Dumper($C) if $t;
+    return ($vars_vec * $C * ~$C * ~$vars_vec)->element(1, 1);
 }
 
 while ( <*.txt> ) {
@@ -149,6 +170,7 @@ foreach $key ( sort keys %time ) {
                     $functions{'CONST'}{$key}{'PROC_MEAN'}[$f] = $time{$key}->[0]{$name}{'PROC_MEAN'};
                     $functions{'CONST'}{$key}{$name}{'PROC_MEAN'} = $time{$key}->[0]{$name}{'PROC_MEAN'};
                     $functions{'CONST'}{$key}{'PROC_VAR'}[$f++] = $student * $time{$key}->[0]{$name}{'PROC_VAR'}**0.5;
+                    $functions{'CONST'}{$key}{$name}{'PROC_VAR'} = $student * $time{$key}->[0]{$name}{'PROC_VAR'}**0.5;
                 }
                 $worksheet->write($row,$k * 1 + $col++,'DATA1',$format);
                 $worksheet->write($row,$k * 1 + $col++,'DATA2',$format);
@@ -208,9 +230,14 @@ foreach $key ( sort keys %time ) {
     my $a;
     my $am = 0;
     my $pm = 0;
+    my ( @p_means, @p_vars, @p_N );
+    push @p_means, $c;
+    push @p_vars, $c_var;
+    push @p_N, 1;
     while ( $i <= @{$time{$key}} ) {
         $a = ($c + $p)/($c + $p/$i);
         $am = 0;
+        @p_N = ( 1 );
         $mean0 = $time{$key}->[0]{'ALL'}{'MEAN'};
         $var0 = $student * $time{$key}->[0]{'ALL'}{'VAR'}**0.5;
         $mean = $time{$key}->[$i - 1]{'ALL'}{'MEAN'};
@@ -220,9 +247,12 @@ foreach $key ( sort keys %time ) {
             my $pos = $functions{$name}{'POSITION'};
             my $N = $functions{$name}{'SIZES'}{$key};
             $N = $N/ceil($N/$i);
+            push @p_N, $N;
             $am += $functions{'CONST'}{$key}{$name}{'PROC_MEAN'}/$N;
             if ( $i == 1 ) {
                 $pm += $functions{'CONST'}{$key}{$name}{'PROC_MEAN'};
+                push @p_means, $functions{'CONST'}{$key}{$name}{'PROC_MEAN'};
+                push @p_vars, $functions{'CONST'}{$key}{$name}{'PROC_VAR'};
                 $worksheet->write($row - 1,$pos,'NM',$format);
             }
             $worksheet->write($row,$pos,$N,$format2);
@@ -233,10 +263,13 @@ foreach $key ( sort keys %time ) {
         #$worksheet->write($row,2,$a**2/100 * ($c_var**2 + $p_var**2/$i**2)**0.5,$format2);
         $worksheet->write($row,2,($i - 1)/$i * $a**2/($c + $p)**2 * ($c_var**2 * $p**2 + $p_var**2 * $c**2)**0.5,$format2);
         $worksheet->write($row,3,$am,$format2);
+        #print Dumper(@p_vars);
+        $worksheet->write($row,4,$am**2/($c + $pm)**2 * (am_var(\@p_means, \@p_vars, \@p_N, ( $i == 0 && $key == 20 )))**0.5,$format2);
         $worksheet->write($row,5,$mean0/$mean,$format2);
+        $worksheet->write($row,6,($var0**2 * $mean**2 + $mean0**2 * $var**2)**0.5/$mean**2,$format2);
         $row++;
         $i++;
     }
 }
 
-print Dumper(%functions);
+#print Dumper(%functions);
