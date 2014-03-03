@@ -1,3 +1,4 @@
+use common::sense;
 use strict;
 use Data::Dumper;
 use Excel::Writer::XLSX;
@@ -10,6 +11,14 @@ my $student = 2.92;#1.3862;
 my $NG = 5;
 #my $OMP = 16;
 my $MPI = 1;
+
+# Заголовки
+my @names = (
+    'Идеал',
+    'Закон Амдала',
+    'Модифицированный Закон Амдала',
+    'Эксперимент',
+);
 
 my $i = 0;
 my $j = 0;
@@ -270,6 +279,35 @@ foreach $key ( sort keys %time ) {
         $row++;
         $i++;
     }
+    my $chart = $workbook->add_chart(
+        type => 'line',
+        embedded => 1,
+    );
+    $chart->add_series(
+        name       => @names[0],
+        categories => "=$key!A20:A35",
+        values     => "=$key!A20:A35",
+    );
+    $chart->add_series(
+        name       => @names[1],
+        categories => "=$key!A20:A35",
+        values     => "=$key!B20:B35",
+    );
+    $chart->add_series(
+        name       => @names[2],
+        categories => "=$key!A20:A35",
+        values     => "=$key!D20:D35",
+    );
+    $chart->add_series(
+        name       => @names[3],
+        categories => "=$key!A20:A35",
+        values     => "=$key!F20:F35",
+    );
+    $chart->set_title ( name => 'Результат распараллеливания' );
+    $chart->set_x_axis( name => 'Количество ядер' );
+    $chart->set_y_axis( name => 'Коэффициент распараллеливания' );
+    $chart->set_style( 10 );
+    $worksheet->insert_chart('H19',$chart,25,10);
 }
 
 #print Dumper(%functions);
