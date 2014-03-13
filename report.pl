@@ -7,7 +7,7 @@ use Math::MatrixReal;
 #use re "debug";
 
 my $thread_num = 8;
-my $student = 2.92;#1.3862;
+my $student = 1.3862;#2.92;
 my $NG = 5;
 #my $OMP = 16;
 my $MPI = 1;
@@ -209,7 +209,7 @@ foreach $key ( sort keys %time ) {
     }
     $col = 0;
     $row++;
-    my $c = $functions{'CONST'}{$key}{'PROC'} = 100 - sum($functions{'CONST'}{$key}{'PROC_MEAN'});
+    my $c = 0;#$functions{'CONST'}{$key}{'PROC'} = 100 - sum($functions{'CONST'}{$key}{'PROC_MEAN'});
     my $c_var = $functions{'CONST'}{$key}{'VAR'} = sum($functions{'CONST'}{$key}{'PROC_VAR'},2)**0.5;
     my $p = sum($functions{'CONST'}{$key}{'PROC_MEAN'});
     my $p_var = $c_var;
@@ -247,9 +247,10 @@ foreach $key ( sort keys %time ) {
         $a = ($c + $p)/($c + $p/$i);
         $am = 0;
         @p_N = ( 1 );
-        $mean0 = $time{$key}->[0]{'ALL'}{'MEAN'};
+        my $o = $time{$key}->[0]{'ALL'}{'MEAN'}*(1-$p/100);
+        $mean0 = $time{$key}->[0]{'ALL'}{'MEAN'} - $o;
         $var0 = $student * $time{$key}->[0]{'ALL'}{'VAR'}**0.5;
-        $mean = $time{$key}->[$i - 1]{'ALL'}{'MEAN'};
+        $mean = $time{$key}->[$i - 1]{'ALL'}{'MEAN'} - $o;
         $var = $student * $time{$key}->[$i - 1]{'ALL'}{'VAR'}**0.5;
         foreach my $name ( keys %functions ) {
             next if $name eq 'CONST';
@@ -289,25 +290,40 @@ foreach $key ( sort keys %time ) {
         values     => "=$key!A20:A35",
     );
     $chart->add_series(
-        name       => @names[1],
-        categories => "=$key!A20:A35",
-        values     => "=$key!B20:B35",
+        name         => @names[1],
+        categories   => "=$key!A20:A35",
+        values       => "=$key!B20:B35",
+        y_error_bars => {
+            type         => 'custom',
+            plus_values  => "=$key!C20:C35",
+            minus_values => "=$key!C20:C35",
+        },
     );
     $chart->add_series(
         name       => @names[2],
         categories => "=$key!A20:A35",
         values     => "=$key!D20:D35",
+        y_error_bars => {
+            type         => 'custom',
+            plus_values  => "=$key!E20:E35",
+            minus_values => "=$key!E20:E35",
+        },
     );
     $chart->add_series(
         name       => @names[3],
         categories => "=$key!A20:A35",
         values     => "=$key!F20:F35",
+        y_error_bars => {
+            type         => 'custom',
+            plus_values  => "=$key!G20:G35",
+            minus_values => "=$key!G20:G35",
+        },
     );
     $chart->set_title ( name => 'Результат распараллеливания' );
     $chart->set_x_axis( name => 'Количество ядер' );
     $chart->set_y_axis( name => 'Коэффициент распараллеливания' );
-    $chart->set_style( 10 );
-    $worksheet->insert_chart('H19',$chart,25,10);
+    $chart->set_style( 2 );
+    $worksheet->insert_chart('H19',$chart,30,15);
 }
 
 #print Dumper(%functions);
